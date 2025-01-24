@@ -1,0 +1,30 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html lang="en" xml:lang="en" xmlns:th="http://www.thymeleaf.org"
+      xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title th:text="${title}"></title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link href='http://fonts.googleapis.com/css?family=Roboto'
+          rel='stylesheet' type='text/css' />
+    <!-- use the font -->
+    <style>
+body {
+	font-family: 'Roboto', sans-serif;
+	font-size: 48px;
+}
+</style>
+</head>
+<body>
+<p>Hello, <strong><span th:text="${name}"></span></strong>!!!</p>
+<p>Your registration has been successfully completed.</p>
+<p>You can start using your account immediately by confirming it.</p>
+<p>To confirm, you need to enter the code below on the screen that opens in the mobile application or click the given link. <strong><span th:text="${registrationCode}"></span></strong>!!!</p>
+<p> <strong><a th:href="${confirmationURL}"><span th:text="${confirmationURLText}"></span></a></strong></p>
+<p>
+    <strong>Thanks,</strong> <br />
+    <span th:text="${location}"></span><br/>
+    <span th:text="${#dates.format(#dates.createNow(), 'dd MMM yyyy HH:mm')}"></span>
+</p>
+</body>
+</html>

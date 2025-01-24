@@ -1,0 +1,12 @@
+[
+  {
+    "id": 1,
+    "name": "Camera 1",
+    "active": true
+  },
+  {
+    "id": 2,
+    "name": "Camera 2",
+    "active": false
+  }
+]
