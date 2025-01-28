@@ -29,10 +29,15 @@ public class RelayController {
         return mav;
     }
 
-    @PostMapping("/toggle/{name}/{status}")
-    public Relay toggleRelay(@PathVariable String name, @PathVariable boolean status) {
-        System.out.println("Röle Güncelleme: " + name + ", Durum: " + status);
-        return relayService.updateRelayStatus(name, status);
+    @GetMapping("/relayList")
+    public List<Relay> getRelayList() {
+        return relayService.getAllRelays();
+    }
+
+    @PostMapping("/toggle/{xName}/{status}")
+    public Relay toggleRelay(@PathVariable String xName, @PathVariable boolean status) {
+        System.out.println("Röle Güncelleme: " + xName + ", Durum: " + status);
+        return relayService.updateRelayStatus(xName, status);
     }
     @PostMapping("/all/off")
     public String turnOffAllRelaysInBatches() {

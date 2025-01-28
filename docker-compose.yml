@@ -1,0 +1,41 @@
+version: "3.9"
+
+services:
+  app:
+    image: openjdk:21       # or whichever base JDK image you want
+    container_name: octoapp
+    # Map your jar into the container and run it
+    volumes:
+      - ./target/OctoAqua-0.0.1-SNAPSHOT.jar:/app.jar
+    command: ["java", "-jar", "/app.jar"]
+    # Expose the app's port
+    ports:
+      - "8080:8080"
+    restart: always
+    # Make sure the app starts after the db container is up
+    depends_on:
+      - db
+    environment:
+      # Example DB connection settings for Spring Boot
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/octoaqua
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=postgres
+      # Add any other environment variables your JAR needs
+
+  db:
+    image: postgres:15
+    container_name: oadb
+    restart: always
+    environment:
+      - POSTGRES_DB=octoaqua
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    # Named volume for data persistence
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    # Optionally expose port if you want external access to DB
+    ports:
+       - "5432:5432"
+
+volumes:
+  db_data:

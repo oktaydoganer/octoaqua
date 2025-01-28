@@ -62,7 +62,7 @@ public class WebSecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of("http://localhost:3001")); // React uygulamanızın adresi
+        configuration.setAllowedOrigins(List.of("http://localhost:3000")); // React uygulamanızın adresi
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*")); // Tüm header'lara izin ver
         configuration.setAllowCredentials(true); // Kimlik bilgilerini destekle

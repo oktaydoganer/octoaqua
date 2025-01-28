@@ -11,14 +11,17 @@ public class Relay {
     private Long id;
 
     @Column(nullable = false, unique = true)
+    private String xName;
+
+    @Column(nullable = false, unique = true)
     private String name;
 
     @Column(nullable = false)
-    private String ip_address;
+    private String ipAddress;
 
     @Column(nullable = false)
     private Boolean status;
 
     @Column(nullable = true) // Voltaj bilgisi isteğe bağlı
-    private String voltage;  // Yeni alan
+    private Float voltage;  // Yeni alan
 }

@@ -30,9 +30,9 @@ public class RelayRepositoryImpl extends GenericRepositoryImpl<Relay> implements
     }
 
     @Override
-    public Relay findByName(String name) {
-        Query query = entityManager.createQuery("from Relay where name=:name order by id");
-        query.setParameter("name", name);
+    public Relay findByName(String xName) {
+        Query query = entityManager.createQuery("from Relay where xName=:xName order by id");
+        query.setParameter("xName", xName);
         return (Relay) query.getSingleResult();
     }
 
