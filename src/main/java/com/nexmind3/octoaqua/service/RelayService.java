@@ -6,6 +6,8 @@ import com.nexmind3.octoaqua.dto.ESP32Response;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Service
 public class RelayService {
@@ -49,19 +51,34 @@ public class RelayService {
 
         List<ESP32Response> esp32Responses = esp32Service.toggleRelay(xName, status);
 
-        if (esp32Responses != null && !esp32Responses.isEmpty()) {
-            ESP32Response latestResponse = esp32Responses.get(esp32Responses.size() - 1);
+        if (esp32Responses == null || esp32Responses.isEmpty()) {
+            return null;
+        }
 
-            System.out.println("Gateway Yanıtı:");
-            System.out.println(latestResponse.toString());
+        ESP32Response latestResponse = esp32Responses.get(esp32Responses.size() - 1);
 
-            relay.setStatus(status);
-            try {
-                relay.setVoltage(Float.parseFloat(latestResponse.getVoltage()));
-            } catch (NumberFormatException e) {
-                e.printStackTrace();
+        System.out.println("Gateway Yanıtı:");
+        System.out.println(latestResponse.toString());
+
+        relay.setStatus(status);
+        try {
+            // Regular expression to find a floating-point number
+            String regex = "\\d+\\.\\d+";
+
+            // Use Pattern and Matcher to extract the float value
+            Pattern pattern = Pattern.compile(regex);
+            Matcher matcher = pattern.matcher(latestResponse.getVoltage());
+
+            if (matcher.find()) {
+                // Parse the matched value as a float
+                float voltage = Float.parseFloat(matcher.group());
+                relay.setVoltage(voltage);
+                System.out.println("Extracted voltage: " + voltage);
+            } else {
+                System.out.println("No float value found in the string.");
             }
-            System.out.println("Güncel Voltaj: " + latestResponse.getVoltage());
+        } catch (NumberFormatException e) {
+            e.printStackTrace();
         }
 
         return relayRepository.save(relay);
