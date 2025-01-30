@@ -1,18 +1,22 @@
 package com.nexmind3.octoaqua.service;
 
 import com.nexmind3.octoaqua.entity.Relay;
+import com.nexmind3.octoaqua.entity.RelayLog;
+import com.nexmind3.octoaqua.repository.RelayLogRepository;
 import com.nexmind3.octoaqua.repository.RelayRepository;
 import com.nexmind3.octoaqua.dto.ESP32Response;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 @Service
 public class RelayService {
     private final RelayRepository relayRepository;
     private final ESP32Service esp32Service;
+    private final RelayLogService relayLogService;
+    private final RelayLogRepository relayLogRepository;
 
     public void turnOffAllRelaysInBatches() {
         // Tüm röleleri al
@@ -32,16 +36,18 @@ public class RelayService {
             relayRepository.saveAll(batch);
         }
     }
-    public RelayService(RelayRepository relayRepository, ESP32Service esp32Service) {
+    public RelayService(RelayRepository relayRepository, ESP32Service esp32Service, RelayLogService relayLogService, RelayLogRepository relayLogRepository) {
         this.relayRepository = relayRepository;
         this.esp32Service = esp32Service;
+        this.relayLogService = relayLogService;
+        this.relayLogRepository = relayLogRepository;
     }
 
     public List<Relay> getAllRelays() {
         return relayRepository.getAllSorted();
     }
 
-    public Relay updateRelayStatus(String xName, boolean status) {
+    public Relay updateRelayStatus(String xName, boolean status, boolean isManual) {
 
         Relay relay = relayRepository.findByName(xName);
 
@@ -51,37 +57,26 @@ public class RelayService {
 
         List<ESP32Response> esp32Responses = esp32Service.toggleRelay(xName, status);
 
-        if (esp32Responses == null || esp32Responses.isEmpty()) {
-            return null;
-        }
+        if (esp32Responses != null && !esp32Responses.isEmpty()) {
+            ESP32Response latestResponse = esp32Responses.get(esp32Responses.size() - 1);
 
-        ESP32Response latestResponse = esp32Responses.get(esp32Responses.size() - 1);
+            System.out.println("Gateway Yanıtı:");
+            System.out.println(latestResponse.toString());
 
-        System.out.println("Gateway Yanıtı:");
-        System.out.println(latestResponse.toString());
+            relay.setStatus(status);
+            relayRepository.save(relay);
+            relayLogService.addRelayLog(relay, status, isManual);
+            System.out.println("Relay: " + relay.getName() + " | Status: " + (status ? "ON" : "OFF") + " | Timestamp: " + LocalDateTime.now());
 
-        relay.setStatus(status);
-        try {
-            // Regular expression to find a floating-point number
-            String regex = "\\d+\\.\\d+";
-
-            // Use Pattern and Matcher to extract the float value
-            Pattern pattern = Pattern.compile(regex);
-            Matcher matcher = pattern.matcher(latestResponse.getVoltage());
-
-            if (matcher.find()) {
-                // Parse the matched value as a float
-                float voltage = Float.parseFloat(matcher.group());
-                relay.setVoltage(voltage);
-                System.out.println("Extracted voltage: " + voltage);
-            } else {
-                System.out.println("No float value found in the string.");
+            try {
+                relay.setVoltage(Float.parseFloat(latestResponse.getVoltage()));
+            } catch (NumberFormatException e) {
+                e.printStackTrace();
             }
-        } catch (NumberFormatException e) {
-            e.printStackTrace();
+            System.out.println("Güncel Voltaj: " + latestResponse.getVoltage());
         }
 
-        return relayRepository.save(relay);
+        return relay;
     }
 
     public Relay renameRelay(Long id, String newName) {
@@ -123,4 +118,30 @@ public class RelayService {
         }
     }
 
+    @Scheduled(fixedRate=30000)
+    public void autoTurnOffRelays(){
+        try {
+            List<RelayLog> activeRelayLogs = getRelaysOpenLongerThanThirtyMinutes();
+            System.out.println("Kontrol yapıldı");
+            activeRelayLogs.forEach(relayLog -> {
+                System.out.println("Geldi");
+                esp32Service.toggleRelay(relayLog.getRelay().getXName(), false);
+                System.out.println(relayLog.getRelay().getXName() + " false yapıldı");
+
+                RelayLog newLog = new RelayLog();
+                newLog.setRelay(relayLog.getRelay());
+                newLog.setStatus(false); // Röle kapalı
+                newLog.setIsManual(false); // Otomatik kapatıldı
+                newLog.setActionTimestamp(LocalDateTime.now()); // Şu anki zaman
+                relayLogRepository.save(newLog); // Log kaydını kaydet
+            });
+        } catch (Exception e) {
+            System.err.println("Hata oluştu: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    public List<RelayLog> getRelaysOpenLongerThanThirtyMinutes() {
+        return relayRepository.findIdleRelays(30);
+    }
 }
