@@ -135,7 +135,7 @@ public class RelayService {
         }
     }
 
-    @Scheduled(fixedRate=10000)
+    @Scheduled(fixedRate=300000)
     public void autoTurnOffRelays(){
         try {
             List<RelayLog> activeRelayLogs = getRelaysOpenLongerThanThirtyMinutes();
